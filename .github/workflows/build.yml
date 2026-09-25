@@ -1,32 +1,11 @@
-name: Build Android APK
-
-on:
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Extract Models
-        run: |
-          mkdir -p model
-          unzip -o model1.zip -d model/ || true
-          unzip -o model2.zip -d model/ || true
-
-      - name: Install Dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev libsqlite3-dev libbz2-dev python3-dev python3-setuptools build-essential
-          pip3 install --user --upgrade buildozer cython virtualenv
-          
-      - name: Setup Buildozer
+- name: Setup Buildozer
         run: |
           export PATH=$PATH:~/.local/bin
           yes | buildozer init
+          
+          # Force Python version to 3.11 (Stable for Android)
+          echo "android.python_recipe = python3" >> buildozer.spec
+          echo "p4a.branch = master" >> buildozer.spec
           
           # Add extra file extensions
           sed -i 's/source.include_exts = py,png,jpg,kv,atlas/source.include_exts = py,png,jpg,kv,atlas,mp4,ttf,db/g' buildozer.spec
@@ -39,14 +18,3 @@ jobs:
           
           # Auto-Accept Android SDK Licenses
           sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
-
-      - name: Build APK
-        run: |
-          export PATH=$PATH:~/.local/bin
-          yes | buildozer -v android debug
-
-      - name: Upload Final APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: AiTeacherApp-APK
-          path: bin/*.apk
