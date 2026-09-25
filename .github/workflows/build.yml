@@ -20,7 +20,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev libsqlite3-dev libbz2-dev python3-dev python3-setuptools build-essential
           pip3 install --user --upgrade buildozer cython virtualenv
           
       - name: Setup Buildozer
@@ -28,16 +28,16 @@ jobs:
           export PATH=$PATH:~/.local/bin
           yes | buildozer init
           
-          # 1. Add extra file extensions (Videos, Fonts, DB)
+          # Add extra file extensions
           sed -i 's/source.include_exts = py,png,jpg,kv,atlas/source.include_exts = py,png,jpg,kv,atlas,mp4,ttf,db/g' buildozer.spec
           
-          # 2. Add Missing Python Libraries (Based on main.py imports)
-          sed -i 's/requirements = python3,kivy/requirements = python3,kivy,kivymd,sqlite3,edge-tts,SpeechRecognition,gtts,pydantic==1.10.13,groq,httpx/g' buildozer.spec
+          # Requirements
+          sed -i 's/requirements = python3,kivy/requirements = python3,kivy,kivymd,sqlite3,edge-tts,SpeechRecognition,gtts,pydantic==1.10.13,groq,httpx,plyer/g' buildozer.spec
           
-          # 3. Add Android Permissions (Mic & Internet)
+          # Add Android Permissions
           sed -i 's/# android.permissions = INTERNET/android.permissions = INTERNET, RECORD_AUDIO/g' buildozer.spec
           
-          # 4. Auto-Accept Android SDK Licenses
+          # Auto-Accept Android SDK Licenses
           sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
 
       - name: Build APK
@@ -50,4 +50,3 @@ jobs:
         with:
           name: AiTeacherApp-APK
           path: bin/*.apk
-          
