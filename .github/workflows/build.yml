@@ -1,0 +1,50 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract Models
+        run: |
+          mkdir -p model
+          unzip -o model1.zip -d model/
+          unzip -o model2.zip -d model/
+
+      - name: Install Dependencies & Setup Buildozer
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+          
+          # Yahan Cython ka stable version 0.29.33 fix kar diya gaya hai
+          pip3 install --user --upgrade buildozer "Cython==0.29.33" virtualenv
+          
+          export PATH=$PATH:~/.local/bin
+          yes | buildozer init
+          
+          # Add extra file extensions for your app
+          sed -i 's/source.include_exts = py,png,jpg,kv,atlas/source.include_exts = py,png,jpg,kv,atlas,mp4,ttf,db/' buildozer.spec
+          
+          # Set NDK Version to 25b
+          sed -i 's/# android.ndk = 25b/android.ndk = 25b/g' buildozer.spec
+          sed -i 's/android.ndk = 28c/android.ndk = 25b/g' buildozer.spec
+          
+          # Auto-Accept Android SDK Licenses
+          sed -i 's/# android.accept_sdk_license = False/android.accept_sdk_license = True/g' buildozer.spec
+
+      - name: Build APK
+        run: |
+          export PATH=$PATH:~/.local/bin
+          yes | buildozer -v android debug
+
+      - name: Upload Final APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AiTeacherApp-APK
+          path: bin/*.apk
